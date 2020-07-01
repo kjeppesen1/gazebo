@@ -1,0 +1,337 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <world name="default">
+
+    <!-- A global light source -->
+    <include>
+      <uri>model://sun</uri>
+    </include>
+
+    <!-- A ground plane -->
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+
+    <!-- Checkerboard pattern -->
+    <!-- Pattern generated using this script:
+    https://gist.github.com/Kukanani/4b09debf29eafdd4d96c4717520e6f18
+
+    > python generate_checkerboard.py 10 10 0.5
+    
+    -->
+    <!-- <include>
+      <pose>0 -3.0 2.5 1.5707963268 0 0</pose>
+      <uri>model://checkerboard_9_7_0_1</uri>
+    </include> -->
+
+   <!-- <include>
+      <pose>0 -7 0.05 0 0 0</pose>
+      <uri>model://checkerboard_25_25_0_5</uri>
+    </include> -->
+
+    <!--model://checkerboard_9_7_0_1-->
+    <!-- model://checkerboard_10_10_0_5 -->
+
+
+
+  <model name="box1">
+    <pose>3 -7 0.5 0 0 0</pose>
+    <static>true</static>
+    <link name="link">
+      <collision name="collision">
+        <geometry>
+          <box>
+            <size>1 1 1</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <geometry>
+          <box>
+            <size>1 1 1</size>
+          </box>
+        </geometry>
+      </visual>
+    </link>
+  </model>
+
+<model name="box2">
+    <pose>-3 -7 0.5 0 0 0</pose>
+    <static>true</static>
+    <link name="link">
+      <collision name="collision">
+        <geometry>
+          <box>
+            <size>1 1 1</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <geometry>
+          <box>
+            <size>1 1 1</size>
+          </box>
+        </geometry>
+      </visual>
+    </link>
+  </model>
+
+    <model name="stereo_camera">
+      <static>true</static>
+      <link name="base">
+        <pose>0 0 0.9725 0 0 0</pose>
+        <collision name="base_collision">
+          <geometry>
+            <cylinder>
+              <radius>0.02</radius>
+              <length>1.945</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name="base_visual">
+          <geometry>
+            <cylinder>
+              <radius>0.02</radius>
+              <length>1.945</length>
+            </cylinder>
+          </geometry>
+        </visual>
+	  <sensor type="multicamera" name="gazebo_stereo_camera">
+	    <update_rate>1.0</update_rate>
+	    <camera name="left" type="depth">
+	      <pose>0.15 0 2.0 0 0 -1.5707963268</pose>
+	      <horizontal_fov>1.226966</horizontal_fov>
+	      <image>
+		<width>2048</width>
+		<height>2048</height>
+	      </image>
+	      <clip>
+		<near>0.01</near>
+		<far>300</far>
+	      </clip>
+	      <distortion>
+                 <k1>-0.013756</k1>
+                 <k2>-0.039575</k2>
+                 <k3>0.008606</k3>
+                 <p1>-0.000389</p1>
+                 <p2>0.000399</p2>
+                 <center>0.4989209 0.49053223</center>
+              </distortion>
+	    </camera>
+	    <camera name="right" type="depth">
+	      <pose>-0.15 0 2.0 0 0 -1.5707963268</pose>
+	      <horizontal_fov>1.226966</horizontal_fov>
+	      <image>
+		<width>2048</width>
+		<height>2048</height>
+	     </image>
+	     <clip>
+	       <near>0.01</near>
+	       <far>300</far>
+	     </clip>
+	     <distortion>
+              <k1>-0.012688</k1>
+              <k2>-0.042836</k2>
+              <k3>0.011249</k3>
+              <p1>-0.000389</p1>
+              <p2>0.000205</p2>
+              <center>0.4989209 0.49053223</center>
+            </distortion>
+	   </camera>
+	   <plugin name="stereo_camera_controller" filename="libgazebo_ros_multicamera.so">
+	     <alwaysOn>true</alwaysOn>
+	     <updateRate>1.0</updateRate>
+	     <cameraName>stereo</cameraName>
+	     <imageTopicName>image_raw</imageTopicName>
+	     <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+	     <frameName>camera_distorted_link</frameName>
+	     <CxPrime>1021.79</CxPrime>
+	     <Cx>1021.79</Cx>
+	     <Cy>1004.61</Cy>
+	     <hackBaseline>0.15</hackBaseline>
+	     <!-- <borderCrop>false</borderCrop> -->
+	     <!-- <focalLength>${focal_length}</focalLength> -->
+	     <!-- image_width / (2*tan(hfov_radian /2)) -->
+	     <distortionK1>-0.013756</distortionK1>
+	     <distortionK2>-0.039575</distortionK2>
+	     <distortionK3>0.008606</distortionK3>
+	     <distortionT1>-0.000216</distortionT1>
+	     <distortionT2>0.000399</distortionT2>
+	  </plugin>
+<!-- TODO: Adding these plugins kills it. Look at my MultiCameraSensor.cc changes -->
+<!-- IDEA: Add print statements in the openni kinect plugin before/after the DepthCameraPlugin::Load call -->
+	   <plugin name="camera_depth_controller_left" filename="libgazebo_ros_openni_kinect.so">
+          	<baseline>0</baseline>
+          	<alwaysOn>true</alwaysOn>
+          	<updateRate>0.0</updateRate>
+          	<cameraName>left</cameraName>
+		<imageTopicName>/left_camera/color/image_raw</imageTopicName>
+		<cameraInfoTopicName>/left_camera/color/camera_info</cameraInfoTopicName>
+		<depthImageTopicName>/left_camera/depth/image_raw</depthImageTopicName>
+		<depthImageCameraInfoTopicName>/stereo/left/camera_info</depthImageCameraInfoTopicName>
+		<pointCloudTopicName>/left_camera/depth/points</pointCloudTopicName>
+		<frameName>camera_link</frameName>
+		<pointCloudCutoff>0.5</pointCloudCutoff>
+		<pointCloudCutoffMax>50</pointCloudCutoffMax>
+		<distortionK1>-0.012688</distortionK1>
+            	<distortionK2>-0.042836</distortionK2>
+            	<distortionT1>-0.000216</distortionT1>
+            	<distortionT2>0.000205</distortionT2>
+            	<distortionK3>0.011249</distortionK3>
+		<CxPrime>1017.35</CxPrime>
+		<Cx>1017.35</Cx>
+		<Cy>1022.25</Cy>
+		<hackBaseline>0</hackBaseline>
+		<borderCrop>false</borderCrop>
+        </plugin>
+        <plugin name="camera_depth_controller_right" filename="libgazebo_ros_openni_kinect.so">
+          	<baseline>0</baseline>
+          	<alwaysOn>true</alwaysOn>
+          	<updateRate>0.0</updateRate>
+          	<cameraName>right</cameraName>
+		<imageTopicName>/right_camera/color/image_raw</imageTopicName>
+		<cameraInfoTopicName>/right_camera/color/camera_info</cameraInfoTopicName>
+		<depthImageTopicName>/right_camera/depth/image_raw</depthImageTopicName>
+		<depthImageCameraInfoTopicName>/stereo/right/camera_info</depthImageCameraInfoTopicName>
+		<pointCloudTopicName>/right_camera/depth/points</pointCloudTopicName>
+		<frameName>right_camera_link</frameName>
+		<pointCloudCutoff>0.5</pointCloudCutoff>
+		<pointCloudCutoffMax>50</pointCloudCutoffMax>
+		<distortionK1>-0.013756</distortionK1>
+            	<distortionK2>-0.039575</distortionK2>
+            	<distortionT1>-0.000389</distortionT1>
+            	<distortionT2>0.000399</distortionT2>
+            	<distortionK3>0.008606</distortionK3>
+		<CxPrime>1021.79</CxPrime>
+		<Cx>1021.79</Cx>
+		<Cy>1004.61</Cy>
+		<hackBaseline>0</hackBaseline>
+		<borderCrop>false</borderCrop>
+        </plugin>
+	</sensor>
+      </link>
+
+      <link name="horizontal_bar">
+        <pose>0 0 1.955 0 0 0</pose>
+        <collision name="horizontal_bar_collision">
+          <geometry>
+            <box>
+              <size>0.6 0.05 0.02 0 0 0</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="horizontal_bar_visual">
+          <geometry>
+            <box>
+              <size>0.6 0.05 0.02 0 0 0</size>
+            </box>
+          </geometry>
+        </visual>
+      </link>
+
+      <link name="left_cam">
+        <pose>0.15 0 2.0 0 0 0</pose>
+        <collision name="left_cam_collision">
+          <pose>0 0 0 1.5707963268 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.1</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name="left_cam_visual">
+          <pose>0 0 0 1.5707963268 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.1</length>
+            </cylinder>
+          </geometry>
+        </visual>
+      </link>
+
+      <link name="right_cam">
+        <pose>-0.15 0 2.0 0 0 0</pose>
+        <collision name="right_cam_collision">
+          <pose>0 0 0 1.5707963268 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.1</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name="right_cam_visual">
+          <pose>0 0 0 1.5707963268 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.1</length>
+            </cylinder>
+          </geometry>
+        </visual>
+      </link>
+
+      <link name="center_cam">
+        <pose>-0.0 0 2.0 0 0 0</pose>
+        <collision name="center_cam_collision">
+          <pose>0 0 0 1.5707963268 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.1</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name="center_cam_visual">
+          <pose>0 0 0 1.5707963268 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.035</radius>
+              <length>0.1</length>
+            </cylinder>
+          </geometry>
+        </visual>
+        <sensor name="center_camera" type="camera">
+          <camera>
+            <save enabled="true">
+              <path>/tmp/camera_save_tutorial</path>
+            </save>
+            <pose>0 0 0 0 0 -1.5707963268</pose>
+            <horizontal_fov>1.226966</horizontal_fov>
+            <image>
+              <width>2048</width>
+              <height>2048</height>
+            </image>
+            <clip>
+              <near>0.1</near>
+              <far>100</far>
+            </clip>
+            <distortion>
+              <k1>-0.012688</k1>
+              <k2>-0.042836</k2>
+              <k3>0.011249</k3>
+              <p1>-0.000216</p1>
+              <p2>0.000205</p2>
+              <center>0.4967529 0.499145</center>
+            </distortion>
+          </camera>
+          <always_on>1</always_on>
+          <update_rate>0.1</update_rate>
+        </sensor>
+      </link>
+    </model>
+
+	
+
+
+    <gui fullscreen='0'>
+      <camera name='user_camera'>
+        <pose frame=''>3.63 5.29 2.53 0 0.238 -1.843</pose>
+        <view_controller>orbit</view_controller>
+      </camera>
+    </gui>
+
+  </world>
+</sdf>
