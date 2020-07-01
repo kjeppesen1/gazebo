@@ -17,6 +17,7 @@
 #include <boost/algorithm/string.hpp>
 #include <functional>
 #include <ignition/math/Pose3.hh>
+#include <string.h>
 
 #include "gazebo/common/Exception.hh"
 #include "gazebo/common/EnumIface.hh"
@@ -29,6 +30,7 @@
 
 #include "gazebo/rendering/RenderEngine.hh"
 #include "gazebo/rendering/Camera.hh"
+#include "gazebo/rendering/DepthCamera.hh"
 #include "gazebo/rendering/Scene.hh"
 #include "gazebo/rendering/RenderingIface.hh"
 
@@ -37,11 +39,14 @@
 #include "gazebo/sensors/SensorFactory.hh"
 #include "gazebo/sensors/MultiCameraSensorPrivate.hh"
 #include "gazebo/sensors/MultiCameraSensor.hh"
+#include "gazebo/sensors/DepthCameraSensorPrivate.hh"
+#include "gazebo/sensors/DepthCameraSensor.hh"
 
 using namespace gazebo;
 using namespace sensors;
 
 GZ_REGISTER_STATIC_SENSOR("multicamera", MultiCameraSensor)
+
 
 //////////////////////////////////////////////////
 MultiCameraSensor::MultiCameraSensor()
@@ -124,8 +129,33 @@ void MultiCameraSensor::Init()
   sdf::ElementPtr cameraSdf = this->sdf->GetElement("camera");
   while (cameraSdf)
   {
-    rendering::CameraPtr camera = this->scene->CreateCamera(
-          cameraSdf->Get<std::string>("name"), false);
+/*    rendering::CameraPtr camera = this->scene->CreateCamera(
+        cameraSdf->Get<std::string>("name"), false);
+    std::cout << "hello"<< std::endl;
+ 
+    //look for the camera type attribute
+    sdf::ParamPtr CamType = cameraSdf->GetAttribute("type");
+    std::string CamTypeString = (*CamType).GetAsString();
+    std::cout << CamTypeString << " hi" << std::endl;
+    //call the create function for the desired camera type
+    if (CamTypeString == "depth"){ */
+        std::cout << "depth"<< std::endl;
+        rendering::DepthCameraPtr camera = this->scene->CreateDepthCamera(
+                 cameraSdf->Get<std::string>("name"), false);
+    /* }
+    else if (CamTypeString == "wide"){
+        std::cout << "width"<< std::endl;
+        rendering::WideAngleCameraPtr camera = this->scene->CreateWideAngleCamera(
+                  cameraSdf->Get<std::string>("name"), false);
+    } */
+
+/*//ADDED//---------------------------
+    if (!this->dataPtr2->depthCamera)
+    {
+      gzerr << "Unable to create depth camera sensor" << std::endl;
+      return;
+    }
+///////--------------------*/
 
     if (!camera)
     {
@@ -137,18 +167,59 @@ void MultiCameraSensor::Init()
     camera->SetCaptureData(true);
     camera->Load(cameraSdf);
 
+/*//ADDED//----------------------
+if (!this->dataPtr2->depthCamera)
+    {
+      gzthrow("Unable to create multicamera sensor[" +
+              cameraSdf->Get<std::string>("name"));
+      return;
+    }
+
+    this->dataPtr2->depthCamera->SetCaptureData(true);
+    this->dataPtr2->depthCamera->Load(cameraSdf);
+///////////----------------------- */
+
     // Do some sanity checks
+    std::cout << "w " << camera->ImageWidth() << std::endl;
+    std::cout << "h " << camera->ImageHeight() << std::endl;
     if (camera->ImageWidth() == 0 || camera->ImageHeight() == 0)
       gzthrow("Image has zero size");
 
     camera->Init();
     camera->CreateRenderTexture(camera->Name() + "_RttTex");
 
+/*//ADDED//------------------------
+ // Do some sanity checks
+    if (this->dataPtr2->depthCamera->ImageWidth() == 0u ||
+        this->dataPtr2->depthCamera->ImageHeight() == 0u)
+    {
+      gzerr << "image has zero size" << std::endl;
+    }
+
+    this->dataPtr2->depthCamera->Init();
+    this->dataPtr2->depthCamera->CreateRenderTexture(
+        this->Name() + "_RttTex_Image");
+    this->dataPtr2->depthCamera->CreateDepthTexture(
+        this->Name() + "_RttTex_Depth");
+    this->dataPtr2->depthCamera->CreateReflectanceTexture(
+        this->Name() + "_RttTex_Reflectance");
+    this->dataPtr2->depthCamera->CreateNormalsTexture(
+        this->Name() + "_RttTex_Normals");
+//////////---------------------- */
+
+
     ignition::math::Pose3d cameraPose = this->pose;
     if (cameraSdf->HasElement("pose"))
       cameraPose = cameraSdf->Get<ignition::math::Pose3d>("pose") + cameraPose;
+
     camera->SetWorldPose(cameraPose);
     camera->AttachToVisual(this->parentId, true, 0, 0);
+
+
+/*//ADDED//----------------------
+    this->dataPtr2->depthCamera->SetWorldPose(cameraPose);
+    this->dataPtr2->depthCamera->AttachToVisual(this->parentId, true, 0, 0);
+/////////---------------------- */
 
     if (cameraSdf->HasElement("noise"))
     {
@@ -177,6 +248,7 @@ void MultiCameraSensor::Init()
     image->set_pixel_format(common::Image::ConvertPixelFormat(
           camera->ImageFormat()));
     image->set_step(camera->ImageWidth() * camera->ImageDepth());
+    std::cout << "d " << camera->ImageDepth() << std::endl;
 
     cameraSdf = cameraSdf->GetNextElement("camera");
   }
